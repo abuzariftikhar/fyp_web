@@ -1,6 +1,11 @@
+import 'dart:convert';
+import 'package:flutter/services.dart';
+import 'package:flutter_vlc_player/flutter_vlc_player.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
-import 'package:rpi_gpio/rpi_gpio.dart';
+import 'package:fyp_web/homebloc.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -8,103 +13,832 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  TextEditingController ipController;
+  TextEditingController controlPortController;
+  TextEditingController streamPortController;
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    ipController = TextEditingController();
+    controlPortController = TextEditingController();
+    streamPortController = TextEditingController();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-          height: MediaQuery.of(context).size.height,
-          width: MediaQuery.of(context).size.width,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CustomButton(
-                angle: 1.57079,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CustomButton(
-                    angle: 0,
+      backgroundColor: Colors.white,
+      body: Consumer(builder: (context, HomeBloc homeBloc, w) {
+        return SafeArea(
+          child: SingleChildScrollView(
+            physics: BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 5),
+                  child: Row(
+                    children: [
+                      IconButton(
+                          icon: Icon(Icons.settings),
+                          color: Colors.black,
+                          onPressed: () {
+                            showDialog(
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                      backgroundColor: Colors.grey.shade100,
+                                      elevation: 5,
+                                      scrollable: true,
+                                      content: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Consumer(builder:
+                                              (context, HomeBloc homeBloc, w) {
+                                            return Form(
+                                              key: _formKey,
+                                              child: SingleChildScrollView(
+                                                child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Container(
+                                                      margin:
+                                                          EdgeInsets.all(20),
+                                                      padding:
+                                                          EdgeInsets.all(15),
+                                                      decoration: BoxDecoration(
+                                                          color: Colors.white,
+                                                          boxShadow: [
+                                                            BoxShadow(
+                                                              blurRadius: 20,
+                                                              color: Colors
+                                                                  .black
+                                                                  .withOpacity(
+                                                                      0.1),
+                                                            )
+                                                          ],
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(
+                                                                      20)),
+                                                      child: Icon(
+                                                        CupertinoIcons
+                                                            .settings_solid,
+                                                        color: Colors.black,
+                                                        size: 44,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                        'Configure ip & and port numbers for RaspberryPi streaming and control server.'),
+                                                    SizedBox(
+                                                      height: 30,
+                                                    ),
+                                                    TextFormField(
+                                                      keyboardType:
+                                                          TextInputType.number,
+                                                      validator: (value) {
+                                                        if (!(value.contains(
+                                                                '.') &&
+                                                            value.contains(
+                                                                '.') &&
+                                                            value.contains(
+                                                                '.'))) {
+                                                          return 'Invalid ip address';
+                                                        }
+                                                        return null;
+                                                      },
+                                                      decoration: InputDecoration(
+                                                          labelText:
+                                                              'RaspberryPi ip',
+                                                          border: OutlineInputBorder(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          5))),
+                                                      controller: ipController,
+                                                      onSaved: (s) {
+                                                        homeBloc.raspberryPiIP =
+                                                            ipController.text;
+                                                      },
+                                                    ),
+                                                    SizedBox(
+                                                      height: 15,
+                                                    ),
+                                                    TextFormField(
+                                                      inputFormatters: <
+                                                          TextInputFormatter>[
+                                                        FilteringTextInputFormatter
+                                                            .digitsOnly
+                                                      ],
+                                                      keyboardType:
+                                                          TextInputType.number,
+                                                      validator: (value) {
+                                                        if (value.length < 4 ||
+                                                            value.length > 6) {
+                                                          return 'Invalid port no';
+                                                        }
+                                                        return null;
+                                                      },
+                                                      decoration: InputDecoration(
+                                                          labelText:
+                                                              'RaspberryPi port no',
+                                                          border: OutlineInputBorder(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          5))),
+                                                      controller:
+                                                          controlPortController,
+                                                      onSaved: (s) {
+                                                        homeBloc.streamPort =
+                                                            controlPortController
+                                                                .text;
+                                                      },
+                                                    ),
+                                                    SizedBox(
+                                                      height: 15,
+                                                    ),
+                                                    TextFormField(
+                                                      inputFormatters: <
+                                                          TextInputFormatter>[
+                                                        FilteringTextInputFormatter
+                                                            .digitsOnly
+                                                      ],
+                                                      keyboardType:
+                                                          TextInputType.number,
+                                                      validator: (value) {
+                                                        if (value.length < 4 ||
+                                                            value.length > 6) {
+                                                          return 'Invalid port no';
+                                                        }
+                                                        return null;
+                                                      },
+                                                      decoration: InputDecoration(
+                                                          labelText:
+                                                              'Streaming port no',
+                                                          border: OutlineInputBorder(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          5))),
+                                                      controller:
+                                                          streamPortController,
+                                                      onSaved: (s) {
+                                                        homeBloc.streamPort =
+                                                            streamPortController
+                                                                .text;
+                                                      },
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          }),
+                                        ],
+                                      ),
+                                      actions: <Widget>[
+                                        FlatButton(
+                                          color: Colors.cyan,
+                                          child: Text(
+                                            'Save',
+                                            style:
+                                                TextStyle(color: Colors.black),
+                                          ),
+                                          onPressed: () {
+                                            if (_formKey.currentState
+                                                .validate()) {
+                                              _formKey.currentState.save();
+                                              Navigator.of(context).pop();
+                                              Scaffold.of(context).showSnackBar(
+                                                  SnackBar(
+                                                      backgroundColor:
+                                                          Colors.blueGrey,
+                                                      content: Text(
+                                                          'Changes saved successfully')));
+                                            } else
+                                              return;
+                                          },
+                                        ),
+                                        FlatButton(
+                                          child: Text('Cancel'),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                            Scaffold.of(context).showSnackBar(
+                                                SnackBar(
+                                                    backgroundColor:
+                                                        Colors.blueGrey,
+                                                    content: Text(
+                                                        'No changes were made.')));
+                                          },
+                                        )
+                                      ],
+                                    ));
+                          }),
+                      NavTab(),
+                    ],
                   ),
-                  CustomButton(
-                    iconData: Icons.stop_sharp,
-                  ),
-                  CustomButton(
-                    angle: 3.142,
-                  ),
-                ],
-              ),
-              CustomButton(
-                angle: 4.7123,
-              ),
-            ],
-          )),
+                ),
+                homeBloc.index == 0 ? Tab1() : Tab2(),
+              ],
+            ),
+          ),
+        );
+      }),
     );
   }
 }
 
-class CustomButton extends StatefulWidget {
-  final double angle;
-  final IconData iconData;
+class NavTabItem extends StatefulWidget {
+  final String title;
+  final int index;
 
-  CustomButton({
-    this.angle = 0,
-    this.iconData = Icons.arrow_back,
-  });
+  NavTabItem({@required this.index, @required this.title});
   @override
-  _CustomButtonState createState() => _CustomButtonState();
+  _NavTabItemState createState() => _NavTabItemState();
 }
 
-class _CustomButtonState extends State<CustomButton> {
-  bool pressed = false;
+class _NavTabItemState extends State<NavTabItem> {
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        forward();
-        onPressed();
+    return Consumer(
+      builder: (context, HomeBloc homeBloc, w) {
+        return GestureDetector(
+          onTap: () {
+            homeBloc.index = widget.index;
+            homeBloc.update();
+          },
+          child: Container(
+              color: Colors.transparent,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: AnimatedDefaultTextStyle(
+                  duration: Duration(milliseconds: 400),
+                  style: TextStyle(
+                      color: widget.index == homeBloc.index
+                          ? Colors.blue
+                          : Colors.grey.shade700),
+                  child: Text(
+                    widget.title,
+                  ),
+                ),
+              )),
+        );
       },
-      child: Transform.rotate(
-        angle: widget.angle,
-        child: AnimatedContainer(
-          duration: Duration(milliseconds: 500),
-          curve: Curves.ease,
-          margin: EdgeInsets.all(10),
-          height: 100,
-          width: 100,
-          decoration: BoxDecoration(
-            color: pressed ? Colors.lime : Colors.black,
-            borderRadius: BorderRadius.circular(50),
+    );
+  }
+}
+
+class NavTab extends StatefulWidget {
+  _NavTabState createState() => _NavTabState();
+}
+
+class _NavTabState extends State<NavTab> {
+  @override
+  Widget build(BuildContext context) {
+    return Consumer(
+      builder: (context, HomeBloc homeBloc, w) {
+        return Align(
+          alignment: Alignment.topCenter,
+          child: Transform.scale(
+            scale: 0.8,
+            child: Container(
+              height: 70,
+              width: 300,
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(15),
+                  color: Color(0xffe8e8e8)),
+              child: Stack(
+                children: [
+                  AnimatedAlign(
+                    curve: Curves.ease,
+                    alignment: homeBloc.index == 0
+                        ? Alignment.centerLeft
+                        : Alignment.centerRight,
+                    duration: Duration(milliseconds: 400),
+                    child: AnimatedContainer(
+                      margin: EdgeInsets.symmetric(horizontal: 10),
+                      height: 54,
+                      width: homeBloc.index == 0 ? 110 : 160,
+                      duration: Duration(milliseconds: 200),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.white),
+                    ),
+                  ),
+                  Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        NavTabItem(index: 0, title: 'Controlling'),
+                        NavTabItem(index: 1, title: 'Video Surveillance'),
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ),
           ),
-          child: Icon(
-            widget.iconData,
-            color: Colors.white,
+        );
+      },
+    );
+  }
+}
+
+class Tab1 extends StatefulWidget {
+  @override
+  _Tab1State createState() => _Tab1State();
+}
+
+class _Tab1State extends State<Tab1> {
+  @override
+  Widget build(BuildContext context) {
+    return Consumer(builder: (context, HomeBloc homeBloc, widget) {
+      return Column(
+        children: [
+          Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    'Show live video stream',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                  SizedBox(
+                    width: 30,
+                  ),
+                  CupertinoSwitch(
+                      value: homeBloc.videoStream,
+                      onChanged: (w) {
+                        homeBloc.videoStream = !homeBloc.videoStream;
+                        homeBloc.update();
+                      })
+                ],
+              ),
+            ),
+          ),
+          Container(
+            height: MediaQuery.of(context).size.height * 0.8,
+            width: MediaQuery.of(context).size.width,
+            child: Stack(
+              children: [
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: AnimatedContainer(
+                      duration: Duration(milliseconds: 300),
+                      curve: Curves.easeInOutCubic,
+                      margin: EdgeInsets.only(
+                          bottom: homeBloc.videoStream
+                              ? MediaQuery.of(context).size.width * 0.7
+                              : 20),
+                      height: MediaQuery.of(context).size.width * 0.6,
+                      width: MediaQuery.of(context).size.width * 0.9,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: StreamPlayer()),
+                ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: AnimatedContainer(
+                    duration: Duration(milliseconds: 300),
+                    curve: Curves.easeInOutCubic,
+                    margin: EdgeInsets.only(
+                      bottom: 20,
+                    ),
+                    height: MediaQuery.of(context).size.width * 0.6,
+                    width: MediaQuery.of(context).size.width * 0.9,
+                    decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(25)),
+                    child: Stack(
+                      children: [
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            DirectionButton(angle: 0, direction: 'Forward'),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                DirectionButton(angle: 3, direction: 'Left'),
+                                Container(
+                                  height: 50,
+                                  width: 50,
+                                  color: Colors.black,
+                                ),
+                                DirectionButton(angle: 1, direction: 'Right'),
+                              ],
+                            ),
+                            DirectionButton(angle: 2, direction: 'Reverse'),
+                          ],
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    });
+  }
+}
+
+class Tab2 extends StatefulWidget {
+  @override
+  _Tab2State createState() => _Tab2State();
+}
+
+class _Tab2State extends State<Tab2> {
+  @override
+  Widget build(BuildContext context) {
+    return Consumer(builder: (context, HomeBloc homeBloc, w) {
+      return Container();
+    });
+  }
+}
+
+class DirectionButton extends StatefulWidget {
+  final int angle;
+  final String direction;
+  DirectionButton({@required this.angle, @required this.direction});
+  @override
+  _DirectionButtonState createState() => _DirectionButtonState();
+}
+
+class _DirectionButtonState extends State<DirectionButton> {
+  bool newStatus = false;
+  @override
+  Widget build(BuildContext context) {
+    return Consumer(builder: (context, HomeBloc homeBloc, w) {
+      return Listener(
+        onPointerDown: (detils) {
+          setState(() {
+            newStatus = true;
+          });
+          var client = http.Client();
+          try {
+            var url =
+                'http://${homeBloc.raspberryPiIP}:${homeBloc.controlPort}/${widget.direction}';
+
+            client.post(url,
+                body: json.encode({'status': newStatus}),
+                headers: {'Content-type': 'application/json'}).then((response) {
+              print('status: ${newStatus.toString()}');
+            });
+          } finally {
+            client.close();
+          }
+        },
+        onPointerUp: (details) {
+          setState(() {
+            newStatus = false;
+          });
+          var client = http.Client();
+          try {
+            var url =
+                'http://${homeBloc.raspberryPiIP}:${homeBloc.controlPort}/Stop';
+
+            client.post(url,
+                body: json.encode({'status': newStatus}),
+                headers: {'Content-type': 'application/json'}).then((response) {
+              print('status: ${newStatus.toString()}');
+            });
+          } finally {
+            client.close();
+          }
+        },
+        child: RotatedBox(
+          quarterTurns: widget.angle,
+          child: AnimatedContainer(
+            duration: Duration(milliseconds: 300),
+            height: 60,
+            width: 50,
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(blurRadius: 10, color: Colors.black.withOpacity(0.1))
+              ],
+              color: newStatus ? Colors.grey.shade700 : Colors.black,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(25),
+                topRight: Radius.circular(25),
+              ),
+            ),
+            child: RotatedBox(
+                quarterTurns: 1,
+                child: Icon(
+                  Icons.arrow_back_ios,
+                  color: newStatus
+                      ? Colors.lightGreenAccent
+                      : Colors.grey.shade700,
+                )),
+          ),
+        ),
+      );
+    });
+  }
+}
+
+class AuthenticationPage extends StatefulWidget {
+  @override
+  _AuthenticationPageState createState() => _AuthenticationPageState();
+}
+
+class _AuthenticationPageState extends State<AuthenticationPage> {
+  TextEditingController ipController;
+  final _formKey = GlobalKey<FormState>();
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(15),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  height: MediaQuery.of(context).size.height / 8,
+                ),
+                Container(
+                  margin: EdgeInsets.all(20),
+                  padding: EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          blurRadius: 20,
+                          color: Colors.black.withOpacity(0.1),
+                        )
+                      ],
+                      borderRadius: BorderRadius.circular(20)),
+                  child: Icon(
+                    CupertinoIcons.loop_thick,
+                    color: Colors.black,
+                    size: 44,
+                  ),
+                ),
+                Text('RaspberryPi Surveillance App'),
+                SizedBox(
+                  height: 30,
+                ),
+                TextFormField(
+                  validator: (value) {
+                    if (!(value == 'admin')) {
+                      return 'Incorrect username';
+                    }
+                    return null;
+                  },
+                  decoration: InputDecoration(
+                      labelText: 'Username',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5))),
+                  controller: ipController,
+                  onSaved: (s) {},
+                ),
+                SizedBox(
+                  height: 15,
+                ),
+                TextFormField(
+                  obscureText: true,
+                  validator: (value) {
+                    if (!(value == 'admin123')) {
+                      return 'Incorrect password';
+                    }
+                    return null;
+                  },
+                  decoration: InputDecoration(
+                      labelText: 'Passowrd',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5))),
+                  controller: ipController,
+                  onSaved: (s) {},
+                ),
+                SizedBox(
+                  height: 15,
+                ),
+                CupertinoButton(
+                  color: Colors.cyan,
+                  onPressed: () {
+                    if (_formKey.currentState.validate()) {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                        return IPConfigPage();
+                      }));
+                    }
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Login',
+                          style: TextStyle(
+                            color: Colors.black,
+                          )),
+                    ],
+                  ),
+                )
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+}
 
-  void onPressed() {
-    setState(() {
-      pressed = true;
-    });
-    Future.delayed(Duration(milliseconds: 300), () {
-      setState(() {
-        pressed = false;
-      });
-    });
+class IPConfigPage extends StatefulWidget {
+  @override
+  _IPConfigPageState createState() => _IPConfigPageState();
+}
+
+class _IPConfigPageState extends State<IPConfigPage> {
+  TextEditingController ipController;
+  TextEditingController controlPortController;
+  TextEditingController streamPortController;
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    ipController = TextEditingController();
+    controlPortController = TextEditingController();
+    streamPortController = TextEditingController();
+    super.initState();
   }
 
-  Future forward({Duration blink}) async {
-    blink ??= const Duration(milliseconds: 500);
-    final gpio = new RpiGpio();
-    final led = gpio.output(5);
-    for (int count = 0; count < 1000; ++count) {
-      led.value = true;
-      await new Future.delayed(blink);
-      led.value = false;
-      await new Future.delayed(blink);
-    }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Consumer(builder: (context, HomeBloc homeBloc, w) {
+        return Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(15),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height / 10,
+                  ),
+                  Container(
+                    margin: EdgeInsets.all(20),
+                    padding: EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            blurRadius: 20,
+                            color: Colors.black.withOpacity(0.1),
+                          )
+                        ],
+                        borderRadius: BorderRadius.circular(20)),
+                    child: Icon(
+                      CupertinoIcons.loop_thick,
+                      color: Colors.black,
+                      size: 44,
+                    ),
+                  ),
+                  Text(
+                      'Configure ip & and port numbers for RaspberryPi streaming and control server.'),
+                  SizedBox(
+                    height: 30,
+                  ),
+                  TextFormField(
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (!(value.contains('.') &&
+                          value.contains('.') &&
+                          value.contains('.'))) {
+                        return 'Invalid ip address';
+                      }
+                      return null;
+                    },
+                    decoration: InputDecoration(
+                        labelText: 'RaspberryPi ip',
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(5))),
+                    controller: ipController,
+                    onSaved: (s) {
+                      homeBloc.raspberryPiIP = ipController.text;
+                    },
+                  ),
+                  SizedBox(
+                    height: 15,
+                  ),
+                  TextFormField(
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.digitsOnly
+                    ],
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value.length < 4 || value.length > 6) {
+                        return 'Invalid port no';
+                      }
+                      return null;
+                    },
+                    decoration: InputDecoration(
+                        labelText: 'RaspberryPi port no',
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(5))),
+                    controller: controlPortController,
+                    onSaved: (s) {
+                      homeBloc.streamPort = controlPortController.text;
+                    },
+                  ),
+                  SizedBox(
+                    height: 15,
+                  ),
+                  TextFormField(
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.digitsOnly
+                    ],
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value.length < 4 || value.length > 6) {
+                        return 'Invalid port no';
+                      }
+                      return null;
+                    },
+                    decoration: InputDecoration(
+                        labelText: 'Streaming port no',
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(5))),
+                    controller: streamPortController,
+                    onSaved: (s) {
+                      homeBloc.streamPort = streamPortController.text;
+                    },
+                  ),
+                  SizedBox(
+                    height: 15,
+                  ),
+                  CupertinoButton(
+                    color: Colors.cyan,
+                    onPressed: () {
+                      if (_formKey.currentState.validate()) {
+                        _formKey.currentState.save();
+                        homeBloc.update();
+                        Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(builder: (context) => HomePage()),
+                            (Route<dynamic> route) => false);
+                      }
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Done'),
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+class StreamPlayer extends StatefulWidget {
+  @override
+  _StreamPlayerState createState() => _StreamPlayerState();
+}
+
+class _StreamPlayerState extends State<StreamPlayer> {
+  String urlToStreamVideo =
+      'http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_60fps_normal.mp4';
+  VlcPlayerController controller;
+  double playerWidth = 640;
+  double playerHeight = 360;
+  @override
+  void initState() {
+    controller = VlcPlayerController(onInit: () {
+      controller.play();
+    });
+
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        body: SizedBox(
+            height: playerHeight,
+            width: playerWidth,
+            child: new VlcPlayer(
+              aspectRatio: 16 / 9,
+              url: urlToStreamVideo,
+              controller: controller,
+            
+              placeholder: Center(child: CircularProgressIndicator()),
+              hwAcc: HwAcc.FULL,
+            )));
   }
 }
