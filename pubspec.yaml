@@ -32,6 +32,8 @@ dependencies:
   provider: ^4.3.2+2
   video_player: ^0.10.12+3
   flutter_vlc_player: ^3.0.7
+  flutter_mjpeg: ^1.2.9
+  flutter_hooks: ^0.14.0
 
 dev_dependencies:
   flutter_test:

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
-import 'package:flutter_vlc_player/flutter_vlc_player.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_mjpeg/flutter_mjpeg.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -401,7 +402,7 @@ class _Tab1State extends State<Tab1> {
                         color: Colors.grey.shade100,
                         borderRadius: BorderRadius.circular(25),
                       ),
-                      child: StreamPlayer()),
+                      child: VideoPlayerWidget()),
                 ),
                 Align(
                   alignment: Alignment.bottomCenter,
@@ -767,9 +768,11 @@ class _IPConfigPageState extends State<IPConfigPage> {
                       return null;
                     },
                     decoration: InputDecoration(
-                        labelText: 'Streaming port no',
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(5))),
+                      labelText: 'Streaming port no',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                    ),
                     controller: streamPortController,
                     onSaved: (s) {
                       homeBloc.streamPort = streamPortController.text;
@@ -806,39 +809,20 @@ class _IPConfigPageState extends State<IPConfigPage> {
   }
 }
 
-class StreamPlayer extends StatefulWidget {
-  @override
-  _StreamPlayerState createState() => _StreamPlayerState();
-}
-
-class _StreamPlayerState extends State<StreamPlayer> {
-  String urlToStreamVideo =
-      'http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_60fps_normal.mp4';
-  VlcPlayerController controller;
-  double playerWidth = 640;
-  double playerHeight = 360;
-  @override
-  void initState() {
-    controller = VlcPlayerController(onInit: () {
-      controller.play();
-    });
-
-    super.initState();
-  }
-
+class VideoPlayerWidget extends HookWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: SizedBox(
-            height: playerHeight,
-            width: playerWidth,
-            child: new VlcPlayer(
-              aspectRatio: 16 / 9,
-              url: urlToStreamVideo,
-              controller: controller,
-            
-              placeholder: Center(child: CircularProgressIndicator()),
-              hwAcc: HwAcc.FULL,
-            )));
+    final isRunning = useState(true);
+    return Consumer(builder: (context, HomeBloc homeBloc, w) {
+      return Expanded(
+        child: Center(
+          child: Mjpeg(
+            isLive: isRunning.value,
+            stream:
+                'http://${homeBloc.raspberryPiIP}:${homeBloc.streamPort}/stream.mjpg',
+          ),
+        ),
+      );
+    });
   }
 }
