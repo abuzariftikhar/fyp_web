@@ -152,7 +152,7 @@ class _HomePageState extends State<HomePage> {
                                                       controller:
                                                           controlPortController,
                                                       onSaved: (s) {
-                                                        homeBloc.streamPort =
+                                                        homeBloc.raspberryPiPort =
                                                             controlPortController
                                                                 .text;
                                                       },
@@ -186,7 +186,7 @@ class _HomePageState extends State<HomePage> {
                                                       controller:
                                                           streamPortController,
                                                       onSaved: (s) {
-                                                        homeBloc.streamPort =
+                                                        homeBloc.raspberryPiPort =
                                                             streamPortController
                                                                 .text;
                                                       },
@@ -357,6 +357,7 @@ class _Tab1State extends State<Tab1> {
     return Consumer(builder: (context, HomeBloc homeBloc, widget) {
       return Column(
         children: [
+          PirStatusWidget(),
           Align(
             alignment: Alignment.topCenter,
             child: Padding(
@@ -383,7 +384,7 @@ class _Tab1State extends State<Tab1> {
             ),
           ),
           Container(
-            height: MediaQuery.of(context).size.height * 0.8,
+            height: MediaQuery.of(context).size.height * 0.7,
             width: MediaQuery.of(context).size.width,
             child: Stack(
               children: [
@@ -402,7 +403,7 @@ class _Tab1State extends State<Tab1> {
                         color: Colors.grey.shade100,
                         borderRadius: BorderRadius.circular(25),
                       ),
-                      child: VideoPlayerWidget()),
+                      child: StreamingPlayerWidget()),
                 ),
                 Align(
                   alignment: Alignment.bottomCenter,
@@ -486,7 +487,7 @@ class _DirectionButtonState extends State<DirectionButton> {
           var client = http.Client();
           try {
             var url =
-                'http://${homeBloc.raspberryPiIP}:${homeBloc.controlPort}/${widget.direction}';
+                'http://${homeBloc.raspberryPiIP}:${homeBloc.raspberryPiPort}/${widget.direction}';
 
             client.post(url,
                 body: json.encode({'status': newStatus}),
@@ -504,7 +505,7 @@ class _DirectionButtonState extends State<DirectionButton> {
           var client = http.Client();
           try {
             var url =
-                'http://${homeBloc.raspberryPiIP}:${homeBloc.controlPort}/Stop';
+                'http://${homeBloc.raspberryPiIP}:${homeBloc.raspberryPiPort}/Stop';
 
             client.post(url,
                 body: json.encode({'status': newStatus}),
@@ -750,7 +751,7 @@ class _IPConfigPageState extends State<IPConfigPage> {
                             borderRadius: BorderRadius.circular(5))),
                     controller: controlPortController,
                     onSaved: (s) {
-                      homeBloc.streamPort = controlPortController.text;
+                      homeBloc.raspberryPiPort = controlPortController.text;
                     },
                   ),
                   SizedBox(
@@ -775,7 +776,7 @@ class _IPConfigPageState extends State<IPConfigPage> {
                     ),
                     controller: streamPortController,
                     onSaved: (s) {
-                      homeBloc.streamPort = streamPortController.text;
+                      homeBloc.raspberryPiPort = streamPortController.text;
                     },
                   ),
                   SizedBox(
@@ -809,7 +810,7 @@ class _IPConfigPageState extends State<IPConfigPage> {
   }
 }
 
-class VideoPlayerWidget extends HookWidget {
+class StreamingPlayerWidget extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final isRunning = useState(true);
@@ -819,7 +820,58 @@ class VideoPlayerWidget extends HookWidget {
           child: Mjpeg(
             isLive: isRunning.value,
             stream:
-                'http://${homeBloc.raspberryPiIP}:${homeBloc.streamPort}/stream.mjpg',
+                'http://${homeBloc.raspberryPiIP}:${homeBloc.raspberryPiPort}/stream.mjpg',
+          ),
+        ),
+      );
+    });
+  }
+}
+
+class PirStatusWidget extends StatefulWidget {
+  @override
+  _PirStatusWidgetState createState() => _PirStatusWidgetState();
+}
+
+class _PirStatusWidgetState extends State<PirStatusWidget> {
+  String body = '';
+  bool newStatus = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer(builder: (context, HomeBloc homeBloc, w) {
+      return GestureDetector(
+        onTap: () {
+          var client = http.Client();
+          try {
+            var url =
+                'http://${homeBloc.raspberryPiIP}:${homeBloc.raspberryPiPort}/ReadPIR';
+
+            client.post(url,
+                body: json.encode({'status': newStatus}),
+                headers: {'Content-type': 'application/json'}).then((response) {
+              body = response.body;
+              print(body);
+            });
+          } finally {
+            client.close();
+          }
+        },
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 300),
+          decoration: BoxDecoration(
+              color:
+                  body == 'good' ? Colors.red.shade100 : Colors.green.shade100,
+              borderRadius: BorderRadius.circular(10)),
+          height: 60,
+          width: MediaQuery.of(context).size.width,
+          margin: EdgeInsets.all(20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Status: '),
+              Text(body == 'good' ? 'Intruder Present.' : 'All Clear.'),
+            ],
           ),
         ),
       );
