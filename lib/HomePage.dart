@@ -30,318 +30,149 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        child: Icon(
+          Icons.settings_ethernet,
+          color: Colors.white,
+        ),
+        onPressed: () {
+          showDialog(
+              context: context,
+              builder: (_) => AlertDialog(
+                    backgroundColor: Colors.grey.shade100,
+                    elevation: 5,
+                    scrollable: true,
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Consumer(builder: (context, HomeBloc homeBloc, w) {
+                          return Form(
+                            key: _formKey,
+                            child: SingleChildScrollView(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    margin: EdgeInsets.all(20),
+                                    padding: EdgeInsets.all(15),
+                                    decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            blurRadius: 20,
+                                            color:
+                                                Colors.black.withOpacity(0.1),
+                                          )
+                                        ],
+                                        borderRadius:
+                                            BorderRadius.circular(20)),
+                                    child: Icon(
+                                      CupertinoIcons.settings_solid,
+                                      color: Colors.black,
+                                      size: 44,
+                                    ),
+                                  ),
+                                  Text(
+                                      'Configure ip & and port number for RaspberryPi streaming and control server.'),
+                                  SizedBox(
+                                    height: 30,
+                                  ),
+                                  TextFormField(
+                                    keyboardType: TextInputType.number,
+                                    validator: (value) {
+                                      if (!(value.contains('.') &&
+                                          value.contains('.') &&
+                                          value.contains('.'))) {
+                                        return 'Invalid ip address';
+                                      }
+                                      return null;
+                                    },
+                                    decoration: InputDecoration(
+                                        labelText: 'IP address',
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(5))),
+                                    controller: ipController,
+                                    onSaved: (s) {
+                                      homeBloc.raspberryPiIP =
+                                          ipController.text;
+                                    },
+                                  ),
+                                  SizedBox(
+                                    height: 15,
+                                  ),
+                                  TextFormField(
+                                    inputFormatters: <TextInputFormatter>[
+                                      FilteringTextInputFormatter.digitsOnly
+                                    ],
+                                    keyboardType: TextInputType.number,
+                                    validator: (value) {
+                                      if (value.length < 4 ||
+                                          value.length > 6) {
+                                        return 'Invalid port no';
+                                      }
+                                      return null;
+                                    },
+                                    decoration: InputDecoration(
+                                      labelText: 'port no',
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                    ),
+                                    controller: controlPortController,
+                                    onSaved: (s) {
+                                      homeBloc.raspberryPiPort =
+                                          controlPortController.text;
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                    actions: <Widget>[
+                      FlatButton(
+                        color: Colors.cyan,
+                        child: Text(
+                          'Save',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        onPressed: () {
+                          if (_formKey.currentState.validate()) {
+                            _formKey.currentState.save();
+                            Navigator.of(context).pop();
+                            Scaffold.of(context).showSnackBar(SnackBar(
+                                backgroundColor: Colors.blueGrey,
+                                content: Text('Changes saved successfully')));
+                          } else
+                            return;
+                        },
+                      ),
+                      FlatButton(
+                        child: Text('Cancel'),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          Scaffold.of(context).showSnackBar(SnackBar(
+                              backgroundColor: Colors.blueGrey,
+                              content: Text('No changes were made.')));
+                        },
+                      )
+                    ],
+                  ));
+        },
+        backgroundColor: Colors.black,
+      ),
       backgroundColor: Colors.white,
       body: Consumer(builder: (context, HomeBloc homeBloc, w) {
         return SafeArea(
           child: SingleChildScrollView(
             physics: BouncingScrollPhysics(),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 5),
-                  child: Row(
-                    children: [
-                      IconButton(
-                          icon: Icon(Icons.settings),
-                          color: Colors.black,
-                          onPressed: () {
-                            showDialog(
-                                context: context,
-                                builder: (_) => AlertDialog(
-                                      backgroundColor: Colors.grey.shade100,
-                                      elevation: 5,
-                                      scrollable: true,
-                                      content: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Consumer(builder:
-                                              (context, HomeBloc homeBloc, w) {
-                                            return Form(
-                                              key: _formKey,
-                                              child: SingleChildScrollView(
-                                                child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  children: [
-                                                    Container(
-                                                      margin:
-                                                          EdgeInsets.all(20),
-                                                      padding:
-                                                          EdgeInsets.all(15),
-                                                      decoration: BoxDecoration(
-                                                          color: Colors.white,
-                                                          boxShadow: [
-                                                            BoxShadow(
-                                                              blurRadius: 20,
-                                                              color: Colors
-                                                                  .black
-                                                                  .withOpacity(
-                                                                      0.1),
-                                                            )
-                                                          ],
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(
-                                                                      20)),
-                                                      child: Icon(
-                                                        CupertinoIcons
-                                                            .settings_solid,
-                                                        color: Colors.black,
-                                                        size: 44,
-                                                      ),
-                                                    ),
-                                                    Text(
-                                                        'Configure ip & and port numbers for RaspberryPi streaming and control server.'),
-                                                    SizedBox(
-                                                      height: 30,
-                                                    ),
-                                                    TextFormField(
-                                                      keyboardType:
-                                                          TextInputType.number,
-                                                      validator: (value) {
-                                                        if (!(value.contains(
-                                                                '.') &&
-                                                            value.contains(
-                                                                '.') &&
-                                                            value.contains(
-                                                                '.'))) {
-                                                          return 'Invalid ip address';
-                                                        }
-                                                        return null;
-                                                      },
-                                                      decoration: InputDecoration(
-                                                          labelText:
-                                                              'RaspberryPi ip',
-                                                          border: OutlineInputBorder(
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          5))),
-                                                      controller: ipController,
-                                                      onSaved: (s) {
-                                                        homeBloc.raspberryPiIP =
-                                                            ipController.text;
-                                                      },
-                                                    ),
-                                                    SizedBox(
-                                                      height: 15,
-                                                    ),
-                                                    TextFormField(
-                                                      inputFormatters: <
-                                                          TextInputFormatter>[
-                                                        FilteringTextInputFormatter
-                                                            .digitsOnly
-                                                      ],
-                                                      keyboardType:
-                                                          TextInputType.number,
-                                                      validator: (value) {
-                                                        if (value.length < 4 ||
-                                                            value.length > 6) {
-                                                          return 'Invalid port no';
-                                                        }
-                                                        return null;
-                                                      },
-                                                      decoration: InputDecoration(
-                                                          labelText:
-                                                              'RaspberryPi port no',
-                                                          border: OutlineInputBorder(
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          5))),
-                                                      controller:
-                                                          controlPortController,
-                                                      onSaved: (s) {
-                                                        homeBloc.raspberryPiPort =
-                                                            controlPortController
-                                                                .text;
-                                                      },
-                                                    ),
-                                                    SizedBox(
-                                                      height: 15,
-                                                    ),
-                                                    TextFormField(
-                                                      inputFormatters: <
-                                                          TextInputFormatter>[
-                                                        FilteringTextInputFormatter
-                                                            .digitsOnly
-                                                      ],
-                                                      keyboardType:
-                                                          TextInputType.number,
-                                                      validator: (value) {
-                                                        if (value.length < 4 ||
-                                                            value.length > 6) {
-                                                          return 'Invalid port no';
-                                                        }
-                                                        return null;
-                                                      },
-                                                      decoration: InputDecoration(
-                                                          labelText:
-                                                              'Streaming port no',
-                                                          border: OutlineInputBorder(
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          5))),
-                                                      controller:
-                                                          streamPortController,
-                                                      onSaved: (s) {
-                                                        homeBloc.raspberryPiPort =
-                                                            streamPortController
-                                                                .text;
-                                                      },
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            );
-                                          }),
-                                        ],
-                                      ),
-                                      actions: <Widget>[
-                                        FlatButton(
-                                          color: Colors.cyan,
-                                          child: Text(
-                                            'Save',
-                                            style:
-                                                TextStyle(color: Colors.black),
-                                          ),
-                                          onPressed: () {
-                                            if (_formKey.currentState
-                                                .validate()) {
-                                              _formKey.currentState.save();
-                                              Navigator.of(context).pop();
-                                              Scaffold.of(context).showSnackBar(
-                                                  SnackBar(
-                                                      backgroundColor:
-                                                          Colors.blueGrey,
-                                                      content: Text(
-                                                          'Changes saved successfully')));
-                                            } else
-                                              return;
-                                          },
-                                        ),
-                                        FlatButton(
-                                          child: Text('Cancel'),
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                            Scaffold.of(context).showSnackBar(
-                                                SnackBar(
-                                                    backgroundColor:
-                                                        Colors.blueGrey,
-                                                    content: Text(
-                                                        'No changes were made.')));
-                                          },
-                                        )
-                                      ],
-                                    ));
-                          }),
-                      NavTab(),
-                    ],
-                  ),
-                ),
-                homeBloc.index == 0 ? Tab1() : Tab2(),
-              ],
-            ),
+            child: Tab1(),
           ),
         );
       }),
-    );
-  }
-}
-
-class NavTabItem extends StatefulWidget {
-  final String title;
-  final int index;
-
-  NavTabItem({@required this.index, @required this.title});
-  @override
-  _NavTabItemState createState() => _NavTabItemState();
-}
-
-class _NavTabItemState extends State<NavTabItem> {
-  @override
-  Widget build(BuildContext context) {
-    return Consumer(
-      builder: (context, HomeBloc homeBloc, w) {
-        return GestureDetector(
-          onTap: () {
-            homeBloc.index = widget.index;
-            homeBloc.update();
-          },
-          child: Container(
-              color: Colors.transparent,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: AnimatedDefaultTextStyle(
-                  duration: Duration(milliseconds: 400),
-                  style: TextStyle(
-                      color: widget.index == homeBloc.index
-                          ? Colors.blue
-                          : Colors.grey.shade700),
-                  child: Text(
-                    widget.title,
-                  ),
-                ),
-              )),
-        );
-      },
-    );
-  }
-}
-
-class NavTab extends StatefulWidget {
-  _NavTabState createState() => _NavTabState();
-}
-
-class _NavTabState extends State<NavTab> {
-  @override
-  Widget build(BuildContext context) {
-    return Consumer(
-      builder: (context, HomeBloc homeBloc, w) {
-        return Align(
-          alignment: Alignment.topCenter,
-          child: Transform.scale(
-            scale: 0.8,
-            child: Container(
-              height: 70,
-              width: 300,
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15),
-                  color: Color(0xffe8e8e8)),
-              child: Stack(
-                children: [
-                  AnimatedAlign(
-                    curve: Curves.ease,
-                    alignment: homeBloc.index == 0
-                        ? Alignment.centerLeft
-                        : Alignment.centerRight,
-                    duration: Duration(milliseconds: 400),
-                    child: AnimatedContainer(
-                      margin: EdgeInsets.symmetric(horizontal: 10),
-                      height: 54,
-                      width: homeBloc.index == 0 ? 110 : 160,
-                      duration: Duration(milliseconds: 200),
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: Colors.white),
-                    ),
-                  ),
-                  Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        NavTabItem(index: 0, title: 'Controlling'),
-                        NavTabItem(index: 1, title: 'Video Surveillance'),
-                      ],
-                    ),
-                  )
-                ],
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 }
@@ -352,116 +183,127 @@ class Tab1 extends StatefulWidget {
 }
 
 class _Tab1State extends State<Tab1> {
+  PageController _pageController;
+  bool newStatus = false;
+  @override
+  void initState() {
+    _pageController = PageController();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer(builder: (context, HomeBloc homeBloc, widget) {
       return Column(
         children: [
           PirStatusWidget(),
-          Align(
-            alignment: Alignment.topCenter,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 10),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    'Show live video stream',
-                    style: TextStyle(color: Colors.black),
-                  ),
-                  SizedBox(
-                    width: 30,
-                  ),
-                  CupertinoSwitch(
-                      value: homeBloc.videoStream,
-                      onChanged: (w) {
-                        homeBloc.videoStream = !homeBloc.videoStream;
-                        homeBloc.update();
-                      })
-                ],
-              ),
+          AnimatedContainer(
+            duration: Duration(milliseconds: 300),
+            curve: Curves.easeInOutCubic,
+            height: MediaQuery.of(context).size.width * 0.6,
+            width: MediaQuery.of(context).size.width * 0.9,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(25),
             ),
-          ),
-          Container(
-            height: MediaQuery.of(context).size.height * 0.7,
-            width: MediaQuery.of(context).size.width,
-            child: Stack(
+            child: PageView(
+              controller: _pageController,
               children: [
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: AnimatedContainer(
-                      duration: Duration(milliseconds: 300),
-                      curve: Curves.easeInOutCubic,
-                      margin: EdgeInsets.only(
-                          bottom: homeBloc.videoStream
-                              ? MediaQuery.of(context).size.width * 0.7
-                              : 20),
-                      height: MediaQuery.of(context).size.width * 0.6,
-                      width: MediaQuery.of(context).size.width * 0.9,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(25),
+                StreamingPlayerWidget(),
+                Container(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(30),
+                        child: Text(
+                            'Tap to record & upload video from Rover to secure storage.'),
                       ),
-                      child: StreamingPlayerWidget()),
-                ),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: AnimatedContainer(
-                    duration: Duration(milliseconds: 300),
-                    curve: Curves.easeInOutCubic,
-                    margin: EdgeInsets.only(
-                      bottom: 20,
-                    ),
-                    height: MediaQuery.of(context).size.width * 0.6,
-                    width: MediaQuery.of(context).size.width * 0.9,
-                    decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(25)),
-                    child: Stack(
-                      children: [
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            DirectionButton(angle: 0, direction: 'Forward'),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                DirectionButton(angle: 3, direction: 'Left'),
-                                Container(
-                                  height: 50,
-                                  width: 50,
-                                  color: Colors.black,
-                                ),
-                                DirectionButton(angle: 1, direction: 'Right'),
-                              ],
-                            ),
-                            DirectionButton(angle: 2, direction: 'Reverse'),
-                          ],
-                        )
-                      ],
-                    ),
+                      CupertinoButton(
+                        onPressed: () {
+                          if (!homeBloc.isRecording) {
+                            setState(() {
+                              newStatus = true;
+                            });
+                            homeBloc.isRecording = true;
+                            homeBloc.update();
+                            var client = http.Client();
+                            try {
+                              var url =
+                                  'http://${homeBloc.raspberryPiIP}:${homeBloc.raspberryPiPort}/recordVideo';
+
+                              client.post(url,
+                                  body: json.encode({'status': newStatus}),
+                                  headers: {
+                                    'Content-type': 'application/json'
+                                  }).then((response) {});
+                            } finally {
+                              client.close();
+                            }
+
+                            Future.delayed(Duration(seconds: 30), () {
+                              homeBloc.isRecording = false;
+                              homeBloc.update();
+                              setState(() {
+                              newStatus = false;
+                            });
+                            });
+                          }
+                        },
+                        child: Text(
+                          homeBloc.isRecording
+                              ? 'Video is recording....'
+                              : 'Record',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        color: homeBloc.isRecording ? Colors.black : Colors.red,
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
+          SizedBox(
+            height: 20,
+          ),
+          AnimatedContainer(
+            duration: Duration(milliseconds: 300),
+            curve: Curves.easeInOutCubic,
+            margin: EdgeInsets.only(
+              bottom: 20,
+            ),
+            height: MediaQuery.of(context).size.width * 0.6,
+            width: MediaQuery.of(context).size.width * 0.9,
+            decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(25)),
+            child: Stack(
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    DirectionButton(angle: 0, direction: 'Forward'),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        DirectionButton(angle: 3, direction: 'Left'),
+                        Container(
+                          height: 50,
+                          width: 50,
+                          color: Colors.black,
+                        ),
+                        DirectionButton(angle: 1, direction: 'Right'),
+                      ],
+                    ),
+                    DirectionButton(angle: 2, direction: 'Reverse'),
+                  ],
+                )
+              ],
+            ),
+          ),
         ],
       );
-    });
-  }
-}
-
-class Tab2 extends StatefulWidget {
-  @override
-  _Tab2State createState() => _Tab2State();
-}
-
-class _Tab2State extends State<Tab2> {
-  @override
-  Widget build(BuildContext context) {
-    return Consumer(builder: (context, HomeBloc homeBloc, w) {
-      return Container();
     });
   }
 }
@@ -663,14 +505,12 @@ class IPConfigPage extends StatefulWidget {
 class _IPConfigPageState extends State<IPConfigPage> {
   TextEditingController ipController;
   TextEditingController controlPortController;
-  TextEditingController streamPortController;
   final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     ipController = TextEditingController();
     controlPortController = TextEditingController();
-    streamPortController = TextEditingController();
     super.initState();
   }
 
@@ -708,7 +548,7 @@ class _IPConfigPageState extends State<IPConfigPage> {
                     ),
                   ),
                   Text(
-                      'Configure ip & and port numbers for RaspberryPi streaming and control server.'),
+                      'Configure ip & and port number for RaspberryPi streaming and control server.'),
                   SizedBox(
                     height: 30,
                   ),
@@ -752,31 +592,6 @@ class _IPConfigPageState extends State<IPConfigPage> {
                     controller: controlPortController,
                     onSaved: (s) {
                       homeBloc.raspberryPiPort = controlPortController.text;
-                    },
-                  ),
-                  SizedBox(
-                    height: 15,
-                  ),
-                  TextFormField(
-                    inputFormatters: <TextInputFormatter>[
-                      FilteringTextInputFormatter.digitsOnly
-                    ],
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value.length < 4 || value.length > 6) {
-                        return 'Invalid port no';
-                      }
-                      return null;
-                    },
-                    decoration: InputDecoration(
-                      labelText: 'Streaming port no',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                    ),
-                    controller: streamPortController,
-                    onSaved: (s) {
-                      homeBloc.raspberryPiPort = streamPortController.text;
                     },
                   ),
                   SizedBox(
@@ -850,7 +665,9 @@ class _PirStatusWidgetState extends State<PirStatusWidget> {
             client.post(url,
                 body: json.encode({'status': newStatus}),
                 headers: {'Content-type': 'application/json'}).then((response) {
-              body = response.body;
+              setState(() {
+                body = response.body;
+              });
               print(body);
             });
           } finally {
@@ -860,17 +677,32 @@ class _PirStatusWidgetState extends State<PirStatusWidget> {
         child: AnimatedContainer(
           duration: Duration(milliseconds: 300),
           decoration: BoxDecoration(
-              color:
-                  body == 'good' ? Colors.red.shade100 : Colors.green.shade100,
+              color: body == 'MOTION DETECTED'
+                  ? Colors.red.shade100
+                  : Colors.green.shade100,
               borderRadius: BorderRadius.circular(10)),
           height: 60,
           width: MediaQuery.of(context).size.width,
           margin: EdgeInsets.all(20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Stack(
             children: [
-              Text('Status: '),
-              Text(body == 'good' ? 'Intruder Present.' : 'All Clear.'),
+              Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Status: '),
+                    Text(body),
+                  ],
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(15.0),
+                  child: Icon(Icons.refresh),
+                ),
+              )
             ],
           ),
         ),
